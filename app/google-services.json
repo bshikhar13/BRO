@@ -1,0 +1,58 @@
+{
+  "project_info": {
+    "project_number": "986786126088",
+    "project_id": "brochat-1326"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:986786126088:android:2e16db2401032697",
+        "android_client_info": {
+          "package_name": "com.example.dexter.bro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "986786126088-slfpf1k6g749jr8g5um8p9g3eaa34olr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.dexter.bro",
+            "certificate_hash": "A7BDC0735B01F32BA382DD23290FC4F42FE09A43"
+          }
+        },
+        {
+          "client_id": "986786126088-4cq499dqof7fug6lshvv4n7huf66t15j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPvk3W9DKYjpTV55iBLV5W6HFucgBMBdw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 2,
+          "analytics_property": {
+            "tracking_id": "UA-58342302-6"
+          }
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "986786126088-4cq499dqof7fug6lshvv4n7huf66t15j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2,
+          "test_banner_ad_unit_id": "ca-app-pub-3940256099942544/6300978111",
+          "test_interstitial_ad_unit_id": "ca-app-pub-3940256099942544/1033173712"
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
