@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.annotation.StringRes;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,9 +13,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.example.dexter.bro.R;
 import com.example.dexter.bro.app.Config;
+import com.example.dexter.bro.app.Endpoints;
+import com.example.dexter.bro.app.MyApplication;
 import com.example.dexter.bro.gcm.GcmIntentService;
+import com.example.dexter.bro.model.User;
+import com.google.android.gms.appdatasearch.GetRecentContextCall;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -23,6 +33,12 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,View.OnClickListener{
 
@@ -35,11 +51,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (MyApplication.getInstance().getPrefManager().getUser() != null) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }
         setContentView(R.layout.activity_main);
 
         SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_STANDARD);
         findViewById(R.id.sign_in_button).setOnClickListener(this);
+        String serverClientId = getString(R.string.server_client_id);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -85,7 +106,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             case R.id.sign_in_button:
                 signIn();
                 break;
-            // ...
         }
     }
 
@@ -128,15 +148,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private void handleSignInResult(GoogleSignInResult result) {
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
         if (result.isSuccess()) {
-            // Signed in successfully, show authenticated UI.
+            // Signed in successfully
             GoogleSignInAccount acct = result.getSignInAccount();
-            Log.i("SB", acct.getDisplayName() + " : " + acct.getId() + " : " + acct.getEmail() + " : " + acct.getServerAuthCode() + " : " + acct.getIdToken() + " : " + acct.getPhotoUrl() + " : " + acct.getServerAuthCode() + " : " + acct.getGrantedScopes() );
+            Log.i("SB", acct.getDisplayName() + " : " + acct.getId() + " : " + acct.getEmail() + " : " + acct.getServerAuthCode() + " : " + acct.getIdToken() + " : " + acct.getPhotoUrl() + " : " + acct.getServerAuthCode() + " : " + acct.getGrantedScopes());
 
-            Log.i("SB",result.toString());
-        } else {
-            // Signed out, show unauthenticated UI.
-            //updateUI(false);
-            Log.i("SB",result.toString());
+            final String email = acct.getEmail();
+            final String ServerAuthCode = acct.getServerAuthCode();
+            final String IdToken = acct.getIdToken();
+            final String name = acct.getDisplayName();
+
+            Intent register = new Intent(this, GcmIntentService.class);
+            register.putExtra(GcmIntentService.EMAIL, email);
+            register.putExtra(GcmIntentService.NAME, name);
+            register.putExtra(GcmIntentService.SERVERAUTHCODE, ServerAuthCode);
+            register.putExtra(GcmIntentService.IDTOKEN, IdToken);
+            startService(register);
+
         }
     }
 
