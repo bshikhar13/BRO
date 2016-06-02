@@ -18,6 +18,7 @@ import com.example.dexter.bro.activity.SmartActivity;
 import com.example.dexter.bro.app.Config;
 import com.example.dexter.bro.app.Endpoints;
 import com.example.dexter.bro.app.MyApplication;
+import com.example.dexter.bro.helper.MyPreferenceManager;
 import com.example.dexter.bro.model.User;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
@@ -36,35 +37,40 @@ public class GcmIntentService extends IntentService {
     private static final String TAG = GcmIntentService.class.getSimpleName();
     public GcmIntentService() {super(TAG);}
 
+    public static final String GID = "gid";
+    public static final String NAME = "name";
     public static final String EMAIL = "email";
     public static final String SERVERAUTHCODE = "serverauthcode";
     public static final String IDTOKEN = "idtoken";
-    public static final String NAME = "name";
+
 
 
     @Override
     protected void onHandleIntent(Intent intent) {
-       // String EMAIL = intent.getStringExtra(EMAIL);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String token = null;
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        String gcmtoken= null;
 
         try {
             InstanceID instanceID = InstanceID.getInstance(this);
-            token = instanceID.getToken(getString(R.string.gcm_defaultSenderId),GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
-            Log.i("TAGG", token + intent.getStringExtra(NAME));
-            //Send this token to App server
-            sendGCMtokenToAppServer(intent.getStringExtra(IDTOKEN),intent.getStringExtra(SERVERAUTHCODE),intent.getStringExtra(NAME), intent.getStringExtra(EMAIL), token );
+            gcmtoken = instanceID.getToken(getString(R.string.gcm_defaultSenderId),GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
 
-            //sharedPreferences.edit().putBoolean(Config.SENT_TOKEN_TO_SERVER, true).apply();
+            String name = intent.getStringExtra(NAME);
+            String email = intent.getStringExtra(EMAIL);
+            String gid = intent.getStringExtra(GID);
+            String serverauthtoken = intent.getStringExtra(SERVERAUTHCODE);
+            String idtoken = intent.getStringExtra(IDTOKEN);
+
+            //Send GCM Token to App Server
+            sendGCMtokenToAppServer(name, email, gid, serverauthtoken, idtoken, gcmtoken);
+
         } catch (Exception e) {
             Log.e(TAG, "Failed to complete token refresh", e);
-            //sharedPreferences.edit().putBoolean(Config.SENT_TOKEN_TO_SERVER, false).apply();
         }
     }
 
 
-    private void sendGCMtokenToAppServer(final String idToken, final String serauthcode, final String name, final String email, final String token) {
+    private void sendGCMtokenToAppServer(final String name, final String email, final String gid, final String serverauthtoken, final String idtoken, final String gcmtoken) {
         String endPoint = Endpoints.LOGIN;
 
         StringRequest strReq = new StringRequest(Request.Method.POST,
@@ -72,22 +78,28 @@ public class GcmIntentService extends IntentService {
             @Override
             public void onResponse(String response) {
                 Log.e(TAG, "response: " + response);
-
                 try {
                     JSONObject obj = new JSONObject(response);
 
                     // check for error
                     if (obj.getBoolean("error") == false) {
+                        JSONObject data = obj.getJSONObject("data");
 
-                        User user = new User(obj.getString("name"),obj.getString("email"));
-                        String gcmtoken = obj.getString("gcmtoken");
-                        MyApplication.getInstance().getPrefManager().storeUser(user);
-                        MyApplication.getInstance().getPrefManager().storeGCM(gcmtoken);
+                        String name = data.getString("name");
+                        String gcmtoken = data.getString("gcmtoken");
+                        String email = data.getString("email");
+                        String gid = data.getString("gid");
+
+                        User user = new User(gid,name, email, gcmtoken);
+                        MyPreferenceManager pref = new MyPreferenceManager(getApplicationContext());
+
+                        pref.storeUser(user);
+                        Toast.makeText(getApplicationContext(),obj.getString("message") , Toast.LENGTH_LONG).show();
                         Intent startActivity = new Intent(getBaseContext(), SmartActivity.class);
                         startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         getApplication().startActivity(startActivity);
                     } else {
-                        Toast.makeText(getApplicationContext(), "Unable to send gcm registration id to our sever. " + obj.getJSONObject("error").getString("message"), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(),"GCM could not be sent to Application Server" + obj.getString("message") , Toast.LENGTH_LONG).show();
                     }
 
                 } catch (JSONException e) {
@@ -106,7 +118,8 @@ public class GcmIntentService extends IntentService {
                 }
                 else{
                     Toast.makeText(getApplicationContext(),"Something went wrong",Toast.LENGTH_LONG).show();
-
+                    NetworkResponse networkResponse = error.networkResponse;
+                    Log.e(TAG, "Volley error: " + error.getMessage() + ", code: " + networkResponse);
                 }
 
             }
@@ -115,11 +128,12 @@ public class GcmIntentService extends IntentService {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("gcm_registration_id", token);
-                params.put("email", email);
-                params.put("name",name);
-                params.put("server_auth_code", serauthcode);
-                params.put("id_token", idToken);
+                if(gid!=null) params.put("gid", gid);
+                if(name!=null)params.put("name", name);
+                if(email!=null)params.put("email", email);
+                if(gcmtoken!=null)params.put("gcmtoken",gcmtoken);
+                if(idtoken!=null)params.put("idtoken", idtoken);
+                if(serverauthtoken!=null)params.put("serverauthcode", serverauthtoken);
                 Log.e(TAG, "params: " + params.toString());
                 return params;
             }

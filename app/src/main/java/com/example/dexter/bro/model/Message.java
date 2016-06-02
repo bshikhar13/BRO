@@ -6,25 +6,16 @@ import java.io.Serializable;
  * Created by Dexter on 5/31/2016.
  */
 public class Message implements Serializable {
-    String id, message, createdAt;
-    User user;
+    String message;
+    int type;
 
     public Message() {
+
     }
 
-    public Message(String id, String message, String createdAt, User user) {
-        this.id = id;
+    public Message(String message, String createdAt, int type) {
         this.message = message;
-        this.createdAt = createdAt;
-        this.user = user;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+        this.type = type;
     }
 
     public String getMessage() {
@@ -35,19 +26,13 @@ public class Message implements Serializable {
         this.message = message;
     }
 
-    public String getCreatedAt() {
-        return createdAt;
+
+    public void setType(int type){
+        this.type = type;
     }
 
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
+    public int getType (){
+        return this.type;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
 }

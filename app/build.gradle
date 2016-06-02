@@ -27,4 +27,7 @@ dependencies {
     compile 'com.google.android.gms:play-services:8.3.0'
     //For Network Communication
     compile 'com.mcxiaoke.volley:library-aar:1.0.0'
+
+    //For recycler View
+    compile 'com.android.support:recyclerview-v7:22.0.0'
 }
