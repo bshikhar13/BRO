@@ -30,6 +30,7 @@ public class MyPreferenceManager {
 
 
     public void storeUser(User user) {
+        clear();
         editor.putString(KEY_GID, user.getGid());
         editor.putString(KEY_NAME, user.getName());
         editor.putString(KEY_EMAIL, user.getEmail());
@@ -62,6 +63,10 @@ public class MyPreferenceManager {
 
     public String getKeyGcmtoken(){
         return pref.getString(KEY_GCMTOKEN,null);
+    }
+
+    public String getKeyGid(){
+        return pref.getString(KEY_GID, null);
     }
 
 }

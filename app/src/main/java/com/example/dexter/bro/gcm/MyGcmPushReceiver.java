@@ -1,8 +1,11 @@
 package com.example.dexter.bro.gcm;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.example.dexter.bro.app.Config;
 import com.google.android.gms.gcm.GcmListenerService;
 
 /**
@@ -22,6 +25,14 @@ public class MyGcmPushReceiver extends GcmListenerService {
         Log.e(TAG, "message: " + message);
         Log.e(TAG, "image: " + image);
         Log.e(TAG, "timestamp: " + timestamp);
+
+        processUserMessage(message);
+    }
+
+    private void processUserMessage(String message){
+        Intent pushNotification = new Intent(Config.MESSAGE_RECEIVED);
+        pushNotification.putExtra("message", message);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(pushNotification);
 
     }
 }

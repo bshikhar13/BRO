@@ -6,4 +6,5 @@ package com.example.dexter.bro.app;
 public class Config {
 
     public static String SERVER_CLIENT_ID = "986786126088-doe7k8iuq9ifnjfcnbcbf86si17jtq01.apps.googleusercontent.com";
+    public static String MESSAGE_RECEIVED = "gcm_message_received";
 }

@@ -1,8 +1,12 @@
 package com.example.dexter.bro.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,6 +28,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.example.dexter.bro.R;
 import com.example.dexter.bro.adapter.ChatThreadAdapter;
+import com.example.dexter.bro.app.Config;
 import com.example.dexter.bro.app.Endpoints;
 import com.example.dexter.bro.app.MyApplication;
 import com.example.dexter.bro.helper.MyPreferenceManager;
@@ -35,7 +40,9 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Dexter on 5/31/2016.
@@ -48,6 +55,7 @@ public class SmartActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ArrayList<Message> messageArrayList;
     private ChatThreadAdapter mAdapter;
+    private BroadcastReceiver mRegistrationBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +84,20 @@ public class SmartActivity extends AppCompatActivity {
 
         recyclerView.setAdapter(mAdapter);
 
+
+        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i("MAR", "here");
+                if (intent.getAction().equals(Config.MESSAGE_RECEIVED)) {
+                    Log.i("MAR", "hereasas");
+                    // new push message is received
+                    handlePushNotification(intent);
+                }
+            }
+        };
+
+
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,10 +107,11 @@ public class SmartActivity extends AppCompatActivity {
     }
 
     private void handlePushNotification(Intent intent) {
-        Message message = (Message) intent.getSerializableExtra("message");
-        String chatRoomId = intent.getStringExtra("chat_room_id");
+        String msg = (String) intent.getSerializableExtra("message");
 
-        if (message != null && chatRoomId != null) {
+        int type = 1;
+        Message message = new Message(msg, type);
+        if (message != null) {
             messageArrayList.add(message);
             mAdapter.notifyDataSetChanged();
             if (mAdapter.getItemCount() > 1) {
@@ -107,6 +130,19 @@ public class SmartActivity extends AppCompatActivity {
             return;
         }
 
+        Message message1 = new Message();
+        message1.setMessage(message);
+        message1.setType(0);
+
+        messageArrayList.add(message1);
+
+        mAdapter.notifyDataSetChanged();
+        if (mAdapter.getItemCount() > 1) {
+            // scrolling to bottom of the recycler view
+            recyclerView.getLayoutManager().smoothScrollToPosition(recyclerView, null, mAdapter.getItemCount() - 1);
+        }
+
+
         String endPoint = Endpoints.SENDMESSAGE;
 
         this.inputMessage.setText("");
@@ -116,26 +152,11 @@ public class SmartActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(String response) {
-
                 try {
                     JSONObject obj = new JSONObject(response);
 
                     // check for error
                     if (obj.getBoolean("error") == false) {
-                        String message = obj.getString("message");
-
-
-                        Message message1 = new Message();
-                        message1.setMessage(message);
-                        message1.setType(1);
-
-                        messageArrayList.add(message1);
-
-                        mAdapter.notifyDataSetChanged();
-                        if (mAdapter.getItemCount() > 1) {
-                            // scrolling to bottom of the recycler view
-                            recyclerView.getLayoutManager().smoothScrollToPosition(recyclerView, null, mAdapter.getItemCount() - 1);
-                        }
 
                     } else {
                         Toast.makeText(getApplicationContext(), "" + obj.getString("message"), Toast.LENGTH_LONG).show();
@@ -159,7 +180,7 @@ public class SmartActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<String, String>();
-                final String  gid = MyApplication.getInstance().getPrefManager().getKeyGcmtoken();
+                final String  gid = MyApplication.getInstance().getPrefManager().getKeyGid();
                 if(gid!=null)params.put("gid",gid);
                 if(message!=null)params.put("message", message);
                 return params;
@@ -193,11 +214,16 @@ public class SmartActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver, new IntentFilter(Config.MESSAGE_RECEIVED));
 
     }
 
     @Override
+
     protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
+
         super.onPause();
     }
+
 }

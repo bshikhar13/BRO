@@ -83,21 +83,28 @@ public class GcmIntentService extends IntentService {
 
                     // check for error
                     if (obj.getBoolean("error") == false) {
+                        Log.i("DIL", "I am ere");
                         JSONObject data = obj.getJSONObject("data");
 
                         String name = data.getString("name");
                         String gcmtoken = data.getString("gcmtoken");
                         String email = data.getString("email");
                         String gid = data.getString("gid");
-
+                        Log.e("DIL", gid+ name + email + gcmtoken);
                         User user = new User(gid,name, email, gcmtoken);
+
                         MyPreferenceManager pref = new MyPreferenceManager(getApplicationContext());
 
                         pref.storeUser(user);
                         Toast.makeText(getApplicationContext(),obj.getString("message") , Toast.LENGTH_LONG).show();
-                        Intent startActivity = new Intent(getBaseContext(), SmartActivity.class);
-                        startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        getApplication().startActivity(startActivity);
+
+                        Intent intent = new Intent(getBaseContext(), SmartActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(intent);
+
+//                        Intent startActivity = new Intent(getBaseContext(), SmartActivity.class);
+//                        startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        getApplication().startActivity(startActivity);
                     } else {
                         Toast.makeText(getApplicationContext(),"GCM could not be sent to Application Server" + obj.getString("message") , Toast.LENGTH_LONG).show();
                     }

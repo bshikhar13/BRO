@@ -13,7 +13,7 @@ public class Message implements Serializable {
 
     }
 
-    public Message(String message, String createdAt, int type) {
+    public Message(String message, int type) {
         this.message = message;
         this.type = type;
     }
